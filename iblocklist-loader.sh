@@ -2,7 +2,7 @@
 
 # Generic iblocklist.com ipset loader for ipset v4 and v6
 # Author: redhat27
-# snbforums thread: https://www.snbforums.com/threads/peer-guardian-rewrite-for-ipset-v6.37929/
+# snbforums thread: https://www.snbforums.com/threads/iblocklist-com-generic-ipset-loader-for-ipset-v6-and-v4.37976/
 # credits for v6 implementation: http://www.unix.com/shell-programming-and-scripting/233825-convert-ip-ranges-cidr-netblocks.html
 
 # Available free block lists from [https://www.iblocklist.com/lists] Format:
