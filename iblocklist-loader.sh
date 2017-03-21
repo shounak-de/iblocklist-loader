@@ -38,8 +38,14 @@ BlockList28="malc0de             malc0de     http://list.iblocklist.com/?list=pb
 BlockList29="adservers           Yoyo        http://list.iblocklist.com/?list=zhogegszwduurnvsyhdf&fileformat=p2p&archiveformat=gz"
 BlockList30="bogon               cidr-report http://list.iblocklist.com/?list=lujdnbasfaaixitgmxpp&fileformat=p2p&archiveformat=gz"
 BlockList31="cruzit-web-attacks  CruzIT      http://list.iblocklist.com/?list=czvaehmjpsnwwttrdoyl&fileformat=p2p&archiveformat=gz"
+BlockList32="Business-ISPs       TBG         http://list.iblocklist.com/?list=jcjfaxgyyshvdbceroxf&fileformat=p2p&archiveformat=gz"
+BlockList33="Primary-Threats     TBG         http://list.iblocklist.com/?list=ijfqtofzixtwayqovmxn&fileformat=p2p&archiveformat=gz"
+BlockList34="Hijacked            TBG         http://list.iblocklist.com/?list=tbnuqfclfkemqivekikv&fileformat=p2p&archiveformat=gz"
+BlockList35="Bogon               TBG         http://list.iblocklist.com/?list=ewqglwibdgjttwttrinl&fileformat=p2p&archiveformat=gz"
+BlockList36="Search-Engines      TBG         http://list.iblocklist.com/?list=pfefqteoxlfzopecdtyw&fileformat=p2p&archiveformat=gz"
+BlockList37="Corporate-Ranges    TBG         http://list.iblocklist.com/?list=ecqbsykllnadihkdirsh&fileformat=p2p&archiveformat=gz"
 
-BLOCKLIST_INDEXES="27 25 31" # Can be any combination of above list indexes, e.g "2 11", "1", "7 24 8 29 31" etc. [Example: PeerGuardian implementation would be "2 11"]
+BLOCKLIST_INDEXES="12 33 9" # Can be any combination of above list indexes, e.g "27 9", "1", "7 24 8 29 31" etc. [Example: PeerGuardian implementation would be "2 11"]
 
 # Use locally cached ipset data or download on each run
 USE_LOCAL_CACHE=Y # [Y|N]
