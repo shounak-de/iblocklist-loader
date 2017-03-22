@@ -53,18 +53,28 @@ USE_LOCAL_CACHE=Y # [Y|N]
 # Re-download blocklist data if locally saved files are older than this many days [Needed mostly for USE_LOCAL_CACHE=Y]
 BLOCKLISTS_SAVE_DAYS=10
 
-# Use DROP or REJECT target for iptable rule. Briefly, for DROP, attacker (or IP being blocked) will get no response and timeout, and REJECT will send immediate response of destination-unreachable (Attacker will know your IP is actively rejecting requests)
+# Use DROP or REJECT target for iptable rule. Briefly, for DROP, attacker (or IP being blocked) will get no response and timeout,
+# and REJECT will send immediate response of destination-unreachable (Attacker will know your IP is actively rejecting requests)
 # See: http://www.chiark.greenend.org.uk/~peterb/network/drop-vs-reject and http://serverfault.com/questions/157375/reject-vs-drop-when-using-iptables
 IPTABLES_RULE_TARGET=DROP # [DROP|REJECT]
 
-# Preparing folder to cache downloaded files [Needed for USE_LOCAL_CACHE=Y or storing the file for posterity]
+# Folder to cache downloaded files [Needed for USE_LOCAL_CACHE=Y or storing the file for posterity]
 IPSET_LISTS_DIR=/jffs/ipset_lists
+
+# *** No settings to modify from here on down ***
 [ -d "$IPSET_LISTS_DIR" ] || mkdir -p $IPSET_LISTS_DIR
 
-ping -q -c 1 google.com >/dev/null 2>&1 && Online=1 || Online=0
-[ $Online -eq 0 ] && logger -t Firewall "$0: Router not online: attempting to use cached files if they exist" && USE_LOCAL_CACHE=Y
-# Different routers got different iptables and ipset syntax, also ipset v6.x did away with iptreemap. That resulted in a totally different way of parsing the large IP ranges, (hash:ip cannot handle large sets of sometimes 8M+ IPs)
-# For ipset v6.x, the script converts IP ranges to CIDR. It creates 2 sets: One for single IPs, and one for CIDRs. For ipset v4.x, the original implementaion of using iptreemap is retained.
+# Wait if this is run early on (before the router has internet connectivity) [Needed by wget to download files]
+while ! ping -q -c 1 google.com &>/dev/null; do
+  sleep 1
+  WaitSeconds=$((WaitSeconds+1))
+  [ $WaitSeconds -gt 300 ] && logger -t Firewall "$0: Router not online: attempting to use cached files if they exist" && USE_LOCAL_CACHE=Y
+done
+
+# Different routers got different iptables and ipset syntax, also ipset v6.x did away with iptreemap.
+# That resulted in a totally different way of parsing the large IP ranges, (hash:ip cannot handle large sets of sometimes 8M+ IPs)
+# For ipset v6.x, the script converts IP ranges to CIDR. It creates 2 sets: One for single IPs, and one for CIDRs.
+# For ipset v4.x, the original implementaion of using iptreemap is retained.
 case $(ipset -v | grep -o "v[4,6]") in
   v6)
     # Loading ipset modules
