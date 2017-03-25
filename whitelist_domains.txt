@@ -1,8 +1,0 @@
-# This file contains the whitelisted domains used by iblocklist-loader.sh  
-# The IPv4 addresses for the domains in this file would be added to an
-# ipset list called [WhiteList] and an iptables ACCEPT rule will be created
-# that would preceed any DROP/REJECT rule created by iblocklist-loader.sh
-
-mail.live.com # Hotmail blocked by TBG Primary-Threats
-icloud.com # blocked by TBG Primary-Threats
-apple.com # blocked by TBG Primary-Threats
