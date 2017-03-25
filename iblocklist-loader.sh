@@ -81,7 +81,7 @@ case $(ipset -v | grep -o "v[4,6]") in
   v6)
     # Loading ipset modules
     lsmod | grep -q "xt_set" || \
-    for module in ip_set ip_set_nethash ip_set_iphash xt_set; do
+    for module in ip_set ip_set_hash_net ip_set_hash_ip xt_set; do
       insmod $module
     done;
     MATCH_SET='--match-set'; CREATE='create'; DESTROY='destroy'; ADD='add'; IPHASH='hash:ip'
