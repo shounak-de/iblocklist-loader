@@ -45,7 +45,7 @@ List35="Bogon               TBG         http://list.iblocklist.com/?list=ewqglwi
 List36="Search-Engines      TBG         http://list.iblocklist.com/?list=pfefqteoxlfzopecdtyw&fileformat=p2p&archiveformat=gz"
 List37="Corporate-Ranges    TBG         http://list.iblocklist.com/?list=ecqbsykllnadihkdirsh&fileformat=p2p&archiveformat=gz"
 
-BLOCKLIST_INDEXES="33 9" # Can be any combination of above list indexes, e.g "15 13", "1", "7 24 8 29 31" etc. [Example: PeerGuardian implementation would be "2 11"]
+BLOCKLIST_INDEXES="7 9" # Can be any combination of above list indexes, e.g "15 13", "1", "7 24 8 29 31" etc. [Example: PeerGuardian implementation would be "2 11"]
 WHITELIST_DOMAINS_FILE="/jffs/ipset_lists/whitelist-domains.txt" # One line per domain, comments (starting with the '#' character) allowed, even inline comments
 
 # Use locally cached ipset data or download on each run
@@ -79,7 +79,7 @@ done
 # For ipset v4.x, the original implementaion of using iptreemap is retained.
 case $(ipset -v | grep -o "v[4,6]") in
   v6)
-    # Loading ipset modules
+    # Loading ipset module 
     lsmod | grep -q "xt_set" || \
     for module in ip_set ip_set_hash_net ip_set_hash_ip xt_set; do
       insmod $module
@@ -138,8 +138,8 @@ case $(ipset -v | grep -o "v[4,6]") in
       ipset swap tIP ${SetName}Single
       ipset swap tNet ${SetName}CIDR
       ipset destroy tIP; ipset destroy tNet
-      iptables-save | grep -q ${SetName}Single || iptables -I FORWARD -m set --match-set ${SetName}Single src,dst -j $IPTABLES_RULE_TARGET
-      iptables-save | grep -q ${SetName}CIDR || iptables -I FORWARD -m set --match-set ${SetName}CIDR src,dst -j $IPTABLES_RULE_TARGET
+      iptables-save | grep -q ${SetName}Single || iptables -I FORWARD -m set --match-set ${SetName}Single src -j $IPTABLES_RULE_TARGET
+      iptables-save | grep -q ${SetName}CIDR || iptables -I FORWARD -m set --match-set ${SetName}CIDR src -j $IPTABLES_RULE_TARGET
       logger -t Firewall "$0: Loaded ${SetName}Single blocklist with $(ipset -L ${SetName}Single | wc -l | awk '{print $1-7}') entries"
       logger -t Firewall "$0: Loaded ${SetName}CIDR blocklist with $(ipset -L ${SetName}CIDR | wc -l | awk '{print $1-7}') entries"
     done;;
@@ -169,7 +169,7 @@ case $(ipset -v | grep -o "v[4,6]") in
       ) | nice -n 15 ipset --restore
       ipset --swap iBTmp ${SetName}
       ipset --destroy iBTmp
-      iptables-save | grep -q ${SetName} || iptables -I FORWARD -m set --set ${SetName} src,dst -j $IPTABLES_RULE_TARGET
+      iptables-save | grep -q ${SetName} || iptables -I FORWARD -m set --set ${SetName} src -j $IPTABLES_RULE_TARGET
       logger -t Firewall "$0: Loaded ${SetName} blocklist with $(ipset -L ${SetName} | wc -l | awk '{print $1-6}') entries"
     done;;
   *)
