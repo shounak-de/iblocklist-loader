@@ -79,7 +79,7 @@ done
 # For ipset v4.x, the original implementaion of using iptreemap is retained.
 case $(ipset -v | grep -o "v[4,6]") in
   v6)
-    # Loading ipset module 
+    # Loading ipset modules
     lsmod | grep -q "xt_set" || \
     for module in ip_set ip_set_hash_net ip_set_hash_ip xt_set; do
       insmod $module
@@ -177,14 +177,13 @@ case $(ipset -v | grep -o "v[4,6]") in
     exit 1;;
 esac
 if [ -s "$WHITELIST_DOMAINS_FILE" ]; then
-  [ ! $(which hostip) ] && echo "hostip utility is needed to process whilelist domains file!" && logger -t Firewall "$0: hostip utility is needed to process whilelist domains file!" && exit 1
   iptables-save | grep -q WhiteList && iptables -D FORWARD -m set $MATCH_SET WhiteList src,dst -j ACCEPT
   ipset $DESTROY WhiteList &>/dev/null # Destroy *if* existing (It will exist if this script is run more than once, e.g. scheduled in cron)
   ipset $CREATE WhiteList $IPHASH
   [ $? -eq 0 ] && entryCount=0
   while read line; do
     if [ -n "${line%%#*}" ]; then
-      for ip in $(hostip ${line%%#*}); do
+      for ip in $(nslookup ${line%%#*} | sed -n '/^$/,$ s/^A.*: //p'); do
         ipset $ADD WhiteList $ip
         [ $? -eq 0 ] && entryCount=$((entryCount+1))
       done
