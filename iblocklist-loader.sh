@@ -191,7 +191,7 @@ if [ -s "$WHITELIST_DOMAINS_FILE" ]; then
   [ $? -eq 0 ] && entryCount=0
   while read line; do
     if [ -n "${line%%#*}" ]; then
-      for ip in $(nslookup ${line%%#*} | sed -n '/^$/,$ s/^A.*: //p'); do
+      for ip in $(nslookup ${line%%#*} | sed -n '/^$/,$ s/^A.*: //p' | cut -d' ' -f1 | grep -v ":"); do
         ipset $ADD WhiteList $ip
         [ $? -eq 0 ] && entryCount=$((entryCount+1))
       done
