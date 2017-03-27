@@ -84,7 +84,7 @@ case $(ipset -v | grep -o "v[4,6]") in
     # Loading ipset modules
     lsmod | grep -q "xt_set" || \
     for module in ip_set ip_set_hash_net ip_set_hash_ip xt_set; do
-      insmod $module
+      modprobe $module
     done;
     MATCH_SET='--match-set'; CREATE='create'; DESTROY='destroy'; ADD='add'; IPHASH='hash:ip'
     ipset destroy tIP 2>/dev/null; ipset destroy tNet 2>/dev/null # Recover if previous run aborted
@@ -152,7 +152,7 @@ case $(ipset -v | grep -o "v[4,6]") in
     # Loading ipset modules
     lsmod | grep -q "ipt_set" || \
     for module in ip_set ip_set_iptreemap ipt_set; do
-      insmod $module
+      modprobe $module
     done;
     MATCH_SET='--set'; CREATE='--create'; DESTROY='--destroy'; ADD='--add'; IPHASH='iphash'
     ipset --destroy iBTmp 2>/dev/null # Recover if previous run aborted
