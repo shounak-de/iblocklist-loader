@@ -45,7 +45,9 @@ List35="Bogon               TBG         http://list.iblocklist.com/?list=ewqglwi
 List36="Search-Engines      TBG         http://list.iblocklist.com/?list=pfefqteoxlfzopecdtyw&fileformat=p2p&archiveformat=gz"
 List37="Corporate-Ranges    TBG         http://list.iblocklist.com/?list=ecqbsykllnadihkdirsh&fileformat=p2p&archiveformat=gz"
 
-BLOCKLIST_INDEXES="7 9" # Can be any combination of above list indexes, e.g "15 13", "1", "7 24 8 29 31" etc. [Example: PeerGuardian implementation would be "2 11"]
+BLOCKLIST_INDEXES="9 27" # Can be any combination of above list indexes, e.g "15 13", "1", "7 24 8 29 31" etc. [Example: PeerGuardian implementation would be "2 11"]
+
+# Your favorite domain blocked after your chosen blocklist(s) are active? You can specify domains to whitelist in a local file
 WHITELIST_DOMAINS_FILE="/jffs/ipset_lists/whitelist-domains.txt" # One line per domain, comments (starting with the '#' character) allowed, even inline comments
 
 # Use locally cached ipset data or download on each run
@@ -97,51 +99,54 @@ case $(ipset -v | grep -o "v[4,6]") in
       $(ipset swap ${SetName}Single ${SetName}Single 2>&1 | grep -q "name does not exist") && ipset n ${SetName}Single hash:ip hashsize 2048 maxelem 1048576
       $(ipset swap ${SetName}CIDR ${SetName}CIDR 2>&1 | grep -q "name does not exist") && ipset n ${SetName}CIDR hash:net hashsize 4096 maxelem 4194304
 
-      logger -t Firewall "$0: Started processing ${SetName} blocklist"
-      # Load the latest rules
-      ( echo -e "n tIP -exist hash:ip hashsize 2048 maxelem 1048576\nn tNet -exist hash:net hashsize 4096 maxelem 4194304"
-        eval $GetCommand | gunzip | sed -n '/0.0.0.0/d;s/^.*://p' | \
-        nice -n 15 awk '
-        # convert dotted quads to long decimal ip. Ex: int ip2dec("192.168.0.15")
-        function ip2dec(ip, slice) {
-          split(ip, slice, ".")
-          return (slice[1] * 2^24) + (slice[2] * 2^16) + (slice[3] * 2^8) + slice[4]
-        }
-        # convert decimal long ip to dotted quads. Ex: str dec2ip(1171259392)
-        function dec2ip(dec, ip, quad) {
-          for (i=3; i>=1; i--) { quad = 256^i; ip = ip int(dec/quad) "."; dec = dec%quad }
-          return ip dec
-        }
-        # convert ip ranges to CIDR notation. Ex: str range2cidr(ip2dec("192.168.0.15"), ip2dec("192.168.5.115"))
-        function range2cidr(ipStart, ipEnd,  bits, mask, newip) {
-          bits = 1; mask = 1
-          while (bits < 32) {
-            newip = or(ipStart, mask)
-            if ((newip>ipEnd) || ((lshift(rshift(ipStart,bits),bits)) != ipStart)) { bits--; mask = rshift(mask,1); break }
-            bits++; mask = lshift(mask,1)+1
+      if ! $(iptables-save | grep -q ${SetName}) || [ "$USE_LOCAL_CACHE" = "N" ]; then
+        logger -t Firewall "$0: Started processing ${SetName} blocklist"
+        ( echo -e "n tIP -exist hash:ip hashsize 2048 maxelem 1048576\nn tNet -exist hash:net hashsize 4096 maxelem 4194304"
+          eval $GetCommand | gunzip | sed -n '/0.0.0.0/d;s/^.*://p' | \
+          nice -n 15 awk '
+          # convert dotted quads to long decimal ip. Ex: int ip2dec("192.168.0.15")
+          function ip2dec(ip, slice) {
+            split(ip, slice, ".")
+            return (slice[1] * 2^24) + (slice[2] * 2^16) + (slice[3] * 2^8) + slice[4]
           }
-          newip = or(ipStart, mask); bits = 32 - bits
-          # ipset cannot handle single IP via /32 [https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=583079]
-          if (bits==32) return "add tIP " dec2ip(ipStart)
-          else result = dec2ip(ipStart) "/" bits
-          if (newip < ipEnd) result = result "\n" range2cidr(newip + 1, ipEnd)
-          return "add tNet " result
-        }
-        BEGIN { FS="-" }
-        $1==$2 { print "add tIP " $1 }
-        $1!=$2 { print range2cidr(ip2dec($1), ip2dec($2)) }
-        '
-      ) > /tmp/${SetName}.txt
-      (grep " tIP " /tmp/${SetName}.txt; echo "COMMIT") | nice -n 15 ipset restore
-      (grep " tNet " /tmp/${SetName}.txt; echo "COMMIT") | nice -n 15 ipset restore
-      rm -f /tmp/${SetName}.txt
-      ipset swap tIP ${SetName}Single
-      ipset swap tNet ${SetName}CIDR
-      ipset destroy tIP; ipset destroy tNet
-      iptables-save | grep -q ${SetName}Single || iptables -I FORWARD -m set --match-set ${SetName}Single src -j $IPTABLES_RULE_TARGET
-      iptables-save | grep -q ${SetName}CIDR || iptables -I FORWARD -m set --match-set ${SetName}CIDR src -j $IPTABLES_RULE_TARGET
-      logger -t Firewall "$0: Loaded ${SetName}Single blocklist with $(ipset -L ${SetName}Single | wc -l | awk '{print $1-7}') entries"
-      logger -t Firewall "$0: Loaded ${SetName}CIDR blocklist with $(ipset -L ${SetName}CIDR | wc -l | awk '{print $1-7}') entries"
+          # convert decimal long ip to dotted quads. Ex: str dec2ip(1171259392)
+          function dec2ip(dec, ip, quad) {
+            for (i=3; i>=1; i--) { quad = 256^i; ip = ip int(dec/quad) "."; dec = dec%quad }
+            return ip dec
+          }
+          # convert ip ranges to CIDR notation. Ex: str range2cidr(ip2dec("192.168.0.15"), ip2dec("192.168.5.115"))
+          function range2cidr(ipStart, ipEnd,  bits, mask, newip) {
+            bits = 1; mask = 1
+            while (bits < 32) {
+              newip = or(ipStart, mask)
+              if ((newip>ipEnd) || ((lshift(rshift(ipStart,bits),bits)) != ipStart)) { bits--; mask = rshift(mask,1); break }
+              bits++; mask = lshift(mask,1)+1
+            }
+            newip = or(ipStart, mask); bits = 32 - bits
+            # ipset cannot handle single IP via /32 [https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=583079]
+            if (bits==32) return "add tIP " dec2ip(ipStart)
+            else result = dec2ip(ipStart) "/" bits
+            if (newip < ipEnd) result = result "\n" range2cidr(newip + 1, ipEnd)
+            return "add tNet " result
+          }
+          BEGIN { FS="-" }
+          $1==$2 { print "add tIP " $1 }
+          $1!=$2 { print range2cidr(ip2dec($1), ip2dec($2)) }
+          '
+        ) > /tmp/${SetName}.txt
+        (grep " tIP " /tmp/${SetName}.txt; echo "COMMIT") | nice -n 15 ipset restore
+        (grep " tNet " /tmp/${SetName}.txt; echo "COMMIT") | nice -n 15 ipset restore
+        rm -f /tmp/${SetName}.txt
+        ipset swap tIP ${SetName}Single
+        ipset swap tNet ${SetName}CIDR
+        ipset destroy tIP; ipset destroy tNet
+        iptables-save | grep -q ${SetName}Single || iptables -I FORWARD -m set --match-set ${SetName}Single src -j $IPTABLES_RULE_TARGET
+        iptables-save | grep -q ${SetName}CIDR || iptables -I FORWARD -m set --match-set ${SetName}CIDR src -j $IPTABLES_RULE_TARGET
+        logger -t Firewall "$0: Loaded ${SetName}Single blocklist with $(ipset -L ${SetName}Single | wc -l | awk '{print $1-7}') entries"
+        logger -t Firewall "$0: Loaded ${SetName}CIDR blocklist with $(ipset -L ${SetName}CIDR | wc -l | awk '{print $1-7}') entries"
+      else
+        logger -t Firewall "$0: Skipped loading ${SetName} blocklists as they are already loaded. To force reloading, set USE_LOCAL_CACHE=N"
+      fi
     done;;
   v4)
     # Loading ipset modules
@@ -161,16 +166,19 @@ case $(ipset -v | grep -o "v[4,6]") in
       # Create the set if it does not exist
       $(ipset --swap ${SetName} ${SetName} 2>&1 | grep -q "Unknown set") && ipset -N ${SetName} iptreemap
 
-      logger -t Firewall "$0: Started processing ${SetName} blocklist"
-      # Load the latest rules
-      ( echo "-N iBTmp iptreemap"
-        eval $GetCommand | gunzip | nice -n 15 sed -n '/0.0.0.0/d;s/^.*:/-A iBTmp /p'
-        echo -e "COMMIT"
-      ) | nice -n 15 ipset --restore
-      ipset --swap iBTmp ${SetName}
-      ipset --destroy iBTmp
-      iptables-save | grep -q ${SetName} || iptables -I FORWARD -m set --set ${SetName} src -j $IPTABLES_RULE_TARGET
-      logger -t Firewall "$0: Loaded ${SetName} blocklist with $(ipset -L ${SetName} | wc -l | awk '{print $1-6}') entries"
+      if ! $(iptables-save | grep -q ${SetName}) || [ "$USE_LOCAL_CACHE" = "N" ]; then
+        logger -t Firewall "$0: Started processing ${SetName} blocklist"
+        ( echo "-N iBTmp iptreemap"
+          eval $GetCommand | gunzip | nice -n 15 sed -n '/0.0.0.0/d;s/^.*:/-A iBTmp /p'
+          echo -e "COMMIT"
+        ) | nice -n 15 ipset --restore
+        ipset --swap iBTmp ${SetName}
+        ipset --destroy iBTmp
+        iptables-save | grep -q ${SetName} || iptables -I FORWARD -m set --set ${SetName} src -j $IPTABLES_RULE_TARGET
+        logger -t Firewall "$0: Loaded ${SetName} blocklist with $(ipset -L ${SetName} | wc -l | awk '{print $1-6}') entries"
+      else
+        logger -t Firewall "$0: Skipped loading ${SetName} blocklist as it's already loaded. To force reloading, set USE_LOCAL_CACHE=N"
+      fi
     done;;
   *)
     logger -t Firewall "$0: Unknown ipset version. Exiting."
