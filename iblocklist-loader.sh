@@ -142,8 +142,8 @@ case $(ipset -v | grep -o "v[4,6]") in
         ipset destroy tIP; ipset destroy tNet
         iptables-save | grep -q ${SetName}Single || iptables -I FORWARD -m set --match-set ${SetName}Single src -j $IPTABLES_RULE_TARGET
         iptables-save | grep -q ${SetName}CIDR || iptables -I FORWARD -m set --match-set ${SetName}CIDR src -j $IPTABLES_RULE_TARGET
-        logger -t Firewall "$0: Loaded ${SetName}Single blocklist with $(ipset -L ${SetName}Single | wc -l | awk '{print $1-7}') entries"
-        logger -t Firewall "$0: Loaded ${SetName}CIDR blocklist with $(ipset -L ${SetName}CIDR | wc -l | awk '{print $1-7}') entries"
+        logger -t Firewall "$0: Loaded ${SetName}Single blocklist with $(ipset -L ${SetName}Single | wc -l | awk '{print $1-6}') entries"
+        logger -t Firewall "$0: Loaded ${SetName}CIDR blocklist with $(ipset -L ${SetName}CIDR | wc -l | awk '{print $1-6}') entries"
       else
         logger -t Firewall "$0: Skipped loading ${SetName} blocklists as they are already loaded. To force reloading, set USE_LOCAL_CACHE=N"
       fi
