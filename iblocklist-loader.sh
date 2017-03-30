@@ -75,6 +75,15 @@ while ! ping -q -c 1 google.com &>/dev/null; do
   [ $WaitSeconds -gt 300 ] && logger -t Firewall "$0: Router not online: attempting to use cached files if they exist" && USE_LOCAL_CACHE=Y
 done
 
+GetSetDetails () {
+  index=$1
+  [ ${#index} -eq 1 ] && index="0${index}"
+  SetName=$(eval echo \$$(eval echo List${index}) | awk '{ print toupper(substr($2,1,1)) substr($2,2) toupper(substr($1,1,1)) substr($1,2) }')
+  Url=$(eval echo \$$(eval echo List${index}) | awk '{ print $3 }')
+  [ ! -s "$IPSET_LISTS_DIR/${SetName}.gz" -o -n "$(find $IPSET_LISTS_DIR/${SetName}.gz -mtime +$LISTS_SAVE_DAYS -print 2>/dev/null)" ] && wget -q -O $IPSET_LISTS_DIR/${SetName}.gz ${Url}
+  [ "$USE_LOCAL_CACHE" = "Y" ] && GetCommand="cat $IPSET_LISTS_DIR/${SetName}.gz" || GetCommand="wget -q -O - ${Url}"
+}
+
 # Different routers got different iptables and ipset syntax, also ipset v6.x did away with iptreemap.
 # That resulted in a totally different way of parsing the large IP ranges, (hash:ip cannot handle large sets of sometimes 8M+ IPs)
 # For ipset v6.x, the script converts IP ranges to CIDR. It creates 2 sets: One for single IPs, and one for CIDRs.
@@ -89,16 +98,10 @@ case $(ipset -v | grep -o "v[4,6]") in
     MATCH_SET='--match-set'; CREATE='create'; DESTROY='destroy'; ADD='add'; IPHASH='hash:ip'
     ipset destroy tIP 2>/dev/null; ipset destroy tNet 2>/dev/null # Recover if previous run aborted
     for index in $BLOCKLIST_INDEXES; do
-      [ ${#index} -eq 1 ] && index="0${index}"
-      SetName=$(eval echo \$$(eval echo List${index}) | awk '{ print toupper(substr($2,1,1)) substr($2,2) toupper(substr($1,1,1)) substr($1,2) }')
-      Url=$(eval echo \$$(eval echo List${index}) | awk '{ print $3 }')
-      [ ! -s "$IPSET_LISTS_DIR/${SetName}.gz" -o -n "$(find $IPSET_LISTS_DIR/${SetName}.gz -mtime +$LISTS_SAVE_DAYS -print 2>/dev/null)" ] && wget -q -O $IPSET_LISTS_DIR/${SetName}.gz ${Url}
-      [ "$USE_LOCAL_CACHE" = "Y" ] && GetCommand="cat $IPSET_LISTS_DIR/${SetName}.gz" || GetCommand="wget -q -O - ${Url}"
-
+      GetSetDetails $index
       # Create the sets if they do not exist
       $(ipset swap ${SetName}Single ${SetName}Single 2>&1 | grep -q "name does not exist") && ipset n ${SetName}Single hash:ip hashsize 2048 maxelem 1048576
       $(ipset swap ${SetName}CIDR ${SetName}CIDR 2>&1 | grep -q "name does not exist") && ipset n ${SetName}CIDR hash:net hashsize 4096 maxelem 4194304
-
       if ! $(iptables-save | grep -q ${SetName}) || [ "$USE_LOCAL_CACHE" = "N" ]; then
         logger -t Firewall "$0: Started processing ${SetName} blocklist"
         ( echo -e "n tIP -exist hash:ip hashsize 2048 maxelem 1048576\nn tNet -exist hash:net hashsize 4096 maxelem 4194304"
@@ -146,7 +149,11 @@ case $(ipset -v | grep -o "v[4,6]") in
         logger -t Firewall "$0: Loaded ${SetName}CIDR blocklist with $(ipset -L ${SetName}CIDR | wc -l | awk '{print $1-6}') entries"
       else
         logger -t Firewall "$0: Skipped loading ${SetName} blocklists as they are already loaded. To force reloading, set USE_LOCAL_CACHE=N"
+        iptables -D FORWARD -m set --match-set ${SetName}Single src -j $IPTABLES_RULE_TARGET
+        iptables -D FORWARD -m set --match-set ${SetName}CIDR src -j $IPTABLES_RULE_TARGET
       fi
+      iptables -I FORWARD -m set --match-set ${SetName}Single src -j $IPTABLES_RULE_TARGET
+      iptables -I FORWARD -m set --match-set ${SetName}CIDR src -j $IPTABLES_RULE_TARGET
     done;;
   v4)
     # Loading ipset modules
@@ -157,15 +164,9 @@ case $(ipset -v | grep -o "v[4,6]") in
     MATCH_SET='--set'; CREATE='--create'; DESTROY='--destroy'; ADD='--add'; IPHASH='iphash'
     ipset --destroy iBTmp 2>/dev/null # Recover if previous run aborted
     for index in $BLOCKLIST_INDEXES; do
-      [ ${#index} -eq 1 ] && index="0${index}"
-      SetName=$(eval echo \$$(eval echo List${index}) | awk '{ print toupper(substr($2,1,1)) substr($2,2) toupper(substr($1,1,1)) substr($1,2) }')
-      Url=$(eval echo \$$(eval echo List${index}) | awk '{ print $3 }')
-      [ ! -s "$IPSET_LISTS_DIR/${SetName}.gz" -o -n "$(find $IPSET_LISTS_DIR/${SetName}.gz -mtime +$LISTS_SAVE_DAYS -print 2>/dev/null)" ] && wget -q -O $IPSET_LISTS_DIR/${SetName}.gz ${Url}
-      [ "$USE_LOCAL_CACHE" = "Y" ] && GetCommand="cat $IPSET_LISTS_DIR/${SetName}.gz" || GetCommand="wget -q -O - ${Url}"
-
+      GetSetDetails $index
       # Create the set if it does not exist
       $(ipset --swap ${SetName} ${SetName} 2>&1 | grep -q "Unknown set") && ipset -N ${SetName} iptreemap
-
       if ! $(iptables-save | grep -q ${SetName}) || [ "$USE_LOCAL_CACHE" = "N" ]; then
         logger -t Firewall "$0: Started processing ${SetName} blocklist"
         ( echo "-N iBTmp iptreemap"
@@ -178,7 +179,9 @@ case $(ipset -v | grep -o "v[4,6]") in
         logger -t Firewall "$0: Loaded ${SetName} blocklist with $(ipset -L ${SetName} | wc -l | awk '{print $1-6}') entries"
       else
         logger -t Firewall "$0: Skipped loading ${SetName} blocklist as it's already loaded. To force reloading, set USE_LOCAL_CACHE=N"
+        iptables -D FORWARD -m set --set ${SetName} src -j $IPTABLES_RULE_TARGET
       fi
+      iptables -I FORWARD -m set --set ${SetName} src -j $IPTABLES_RULE_TARGET
     done;;
   *)
     logger -t Firewall "$0: Unknown ipset version. Exiting."
@@ -196,7 +199,7 @@ if [ -s "$WHITELIST_DOMAINS_FILE" ]; then
         [ $? -eq 0 ] && entryCount=$((entryCount+1))
       done
     fi
-  done <$WHITELIST_DOMAINS_FILE
+  done < $WHITELIST_DOMAINS_FILE
   logger -t Firewall "$0: Added WhiteList ($entryCount entries)"
   iptables-save | grep -q WhiteList || iptables -I FORWARD -m set $MATCH_SET WhiteList src,dst -j ACCEPT
 fi
