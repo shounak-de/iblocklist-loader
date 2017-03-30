@@ -1,0 +1,9 @@
+# This file contains the blacklisted domains used by iblocklist-loader (Referenced via BLACKLIST_DOMAINS_FILE= line)
+# The IPv4 addresses for the domains in this file would be added to an ipset list called [BlacklistDomains] and then
+# an iptables DROP/REJECT rule will be created by iblocklist-loader. This domains would be processed right after the
+# WHITELIST_DOMAINS_FILE processing
+
+# These below are just examples =)
+img1.blogblog.com # Advertising
+alice.it # Web spam
+camdolls.com # Web spam
