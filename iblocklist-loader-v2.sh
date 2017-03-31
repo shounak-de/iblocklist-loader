@@ -257,7 +257,7 @@ for domainsFile in BLACK WHITE; do
     while read line; do
       if [ -n "${line%%#*}" ]; then
         for ip in $(nslookup ${line%%#*} | sed -n '/^$/,$ s/^A.*: //p' | cut -d' ' -f1 | grep -v ":"); do
-          ipset $ADD $IPSET_LIST $ip
+          ipset $ADD $IPSET_LIST $ip &> /dev/null
           [ $? -eq 0 ] && entryCount=$((entryCount+1))
         done
       fi
