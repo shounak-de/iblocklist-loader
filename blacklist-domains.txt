@@ -72,7 +72,7 @@ ninja.census.shodan.io # US
 border.census.shodan.io # US
 burger.census.shodan.io # US
 atlantic.dns.shodan.io # US
-blog.shodan.io 2) # US
+blog.shodan.io # US
 hello.data.shodan.io # US
 www.shodan.io # US
 scanner01.project25499.com # US
