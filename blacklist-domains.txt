@@ -3,7 +3,77 @@
 # an iptables DROP/REJECT rule will be created by iblocklist-loader. This domains would be processed right after the
 # WHITELIST_DOMAINS_FILE processing
 
-# These below are just examples =)
-img1.blogblog.com # Advertising
-alice.it # Web spam
-camdolls.com # Web spam
+# Telemetry servers from http://cyberwarzone.com/block-these-ips-to-stop-microsoft-from-snooping-on-your-windows-10-device/
+settings-sandbox.data.microsoft.com # Singapore
+statsfe1.ws.microsoft.com # United States
+fe2.update.microsoft.com.akadns.net # United States
+telemetry.appex.bing.net # United States
+cs1.wpc.v0cdn.net # United States
+redir.metaservices.microsoft.com # United States, CO, Englewood
+i1.services.social.microsoft.com # United States, MA, Cambridge
+sls.update.microsoft.com.akadns.net # United States, WA, Redmond
+diagnostics.support.microsoft.com # United States, WA, Redmond
+choice.microsoft.com # United States, WA, Redmond
+choice.microsoft.com.nsatc.net # United States, WA, Redmond
+a-0001.a-msedge.net # United States, WA, Redmond
+pre.footprintpredict.com # United States, WA, Redmond
+watson.live.com # United States, WA, Redmond
+survey.watson.microsoft.com # United States, WA, Redmond
+compatexchange.cloudapp.net # United States, WA, Redmond
+vortex.data.microsoft.com # United States, WA, Redmond
+vortex-win.data.microsoft.com # United States, WA, Redmond
+vortex-sandbox.data.microsoft.com # United States, WA, Redmond
+watson.ppe.telemetry.microsoft.com # United States, WA, Redmond
+df.telemetry.microsoft.com # United States, WA, Redmond
+telemetry.microsoft.com # United States, WA, Redmond
+reports.wes.df.telemetry.microsoft.com # United States, WA, Redmond
+services.wes.df.telemetry.microsoft.com # United States, WA, Redmond
+public-family.api.account.microsoft.com # United States, WY, Cheyenne
+urs.microsoft.com # United States, TX, San Antonio
+wes.df.telemetry.microsoft.com # United States, WA, Redmond
+sqm.df.telemetry.microsoft.com # United States, WA, Redmond
+statsfe2.ws.microsoft.com # United States, WA, Redmond
+statsfe2.update.microsoft.com.akadns.net # United States, WA, Redmond
+watson.telemetry.microsoft.com # United States, WA, Redmond
+watson.telemetry.microsoft.com.nsatc.net # United States, WA, Redmond
+oca.telemetry.microsoft.com # United States, WA, Redmond
+oca.telemetry.microsoft.com.nsatc.net # United States, WA, Redmond
+watson.microsoft.com # United States, WA, Redmond
+telecommand.telemetry.microsoft.com # United States, WA, Redmond
+telecommand.telemetry.microsoft.com.nsatc.net # United States, WA, Redmond
+sqm.telemetry.microsoft.com # United States, WA, Redmond
+sqm.telemetry.microsoft.com.nsatc.net # United States, WA, Redmond
+corpext.msitadfs.glbdns2.microsoft.com # United States, WA, Redmond
+corp.sts.microsoft.com # United States, WA, Redmond
+telemetry.urs.microsoft.com # United States, WA, Redmond
+
+# Shodan and project25499 scanners from http://wiki.ipfire.org/en/configuration/firewall/blockshodan
+shodan.io  # US
+census1.shodan.io # US
+census2.shodan.io # US
+census3.shodan.io # US
+census4.shodan.io # NL
+census5.shodan.io # RO
+census6.shodan.io # US
+census7.shodan.io # US
+census8.shodan.io # US
+census9.shodan.io # US
+census10.shodan.io # IS
+census11.shodan.io # IS
+census12.shodan.io # US
+atlantic.census.shodan.io # DE
+pacific.census.shodan.io # DE
+rim.census.shodan.io # DE
+pirate.census.shodan.io # US
+ninja.census.shodan.io # US
+border.census.shodan.io # US
+burger.census.shodan.io # US
+atlantic.dns.shodan.io # US
+blog.shodan.io 2) # US
+hello.data.shodan.io # US
+www.shodan.io # US
+scanner01.project25499.com # US
+scanner02.project25499.com # US
+scanner03.project25499.com # US
+scanner04.project25499.com # US
+scanner05.project25499.com # US
