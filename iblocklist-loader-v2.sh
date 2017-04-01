@@ -83,7 +83,7 @@ BLOCKLIST_INDEXES="13 15 27 38" # Can be any combination of above list indexes, 
 BLOCKLIST_TRAFFIC="src" # [src|dst|src,dst] Use [src] to block inbound traffic, [dst] to block outbound traffic and [src,dst] to block both traffic
 
 # Allow traffic from any of the above lists [!]
-ALLOWLIST_INDEXES="" # Can be any combination of above list indexes, just like BLOCKLIST_INDEXES
+ALLOWLIST_INDEXES="59" # Can be any combination of above list indexes, just like BLOCKLIST_INDEXES
 ALLOWLIST_TRAFFIC="src,dst" # [src|dst|src,dst] Use [src] to allow inbound traffic, [dst] to allow outbound traffic and [src,dst] to allow both traffic
 
 # Your favorite domain blocked after your chosen blocklist(s) are active? You can (optionally) specify domains to whitelist in a local file
@@ -110,7 +110,7 @@ USE_LOCAL_CACHE=Y # [Y|N]
 # Re-download list data if locally saved files are older than this many days [Needed mostly for USE_LOCAL_CACHE=Y]
 LISTS_SAVE_DAYS=10
 
-# Use DROP or REJECT target for iptable rule. Briefly, for DROP, attacker (or IP being blocked) will get no response and timeout,
+# Use DROP or REJECT target for iptables block rule. Briefly, for DROP, attacker (or IP being blocked) will get no response and timeout,
 # and REJECT will send immediate response of destination-unreachable (Attacker will know your IP is actively rejecting requests)
 # See: http://www.chiark.greenend.org.uk/~peterb/network/drop-vs-reject and http://serverfault.com/questions/157375/reject-vs-drop-when-using-iptables
 # or from our own RMerlin: https://www.snbforums.com/threads/ip-tables-confusion.30373/#post-237738
@@ -257,7 +257,7 @@ for domainsFile in BLACK WHITE; do
     while read line; do
       if [ -n "${line%%#*}" ]; then
         for ip in $(nslookup ${line%%#*} | sed -n '/^$/,$ s/^A.*: //p' | cut -d' ' -f1 | grep -v ":"); do
-          ipset $ADD $IPSET_LIST $ip &> /dev/null
+          ipset $ADD $IPSET_LIST $ip &>/dev/null
           [ $? -eq 0 ] && entryCount=$((entryCount+1))
         done
       fi
