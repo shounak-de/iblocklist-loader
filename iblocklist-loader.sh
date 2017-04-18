@@ -27,7 +27,7 @@ List17="webexploit          Bluetack    http://list.iblocklist.com/?list=ghlzqtq
 List18="iana-reserved       Bluetack    http://list.iblocklist.com/?list=bcoepfyewziejvcqyhqo&fileformat=p2p&archiveformat=gz"
 List19="iana-private        Bluetack    http://list.iblocklist.com/?list=cslpybexmxyuacbyuvib&fileformat=p2p&archiveformat=gz"
 List20="iana-multicast      Bluetack    http://list.iblocklist.com/?list=pwqnlynprfgtjbgqoizj&fileformat=p2p&archiveformat=gz"
-List21="fornonlancomputers  Bluetack    http://list.iblocklist.com/?list=jhaoawihmfxgnvmaqffp&fileformat=p2p&archiveformat=gz"
+List21="NonLanComputers     Bluetack    http://list.iblocklist.com/?list=jhaoawihmfxgnvmaqffp&fileformat=p2p&archiveformat=gz"
 List22="exclusions          Bluetack    http://list.iblocklist.com/?list=mtxmiireqmjzazcsoiem&fileformat=p2p&archiveformat=gz"
 List23="DROP                Spamhaus    http://list.iblocklist.com/?list=zbdlwrqkabxbcppvrnos&fileformat=p2p&archiveformat=gz"
 List24="ZeuS                abuse       http://list.iblocklist.com/?list=ynkdjqsjyfmilsgbogqf&fileformat=p2p&archiveformat=gz"
