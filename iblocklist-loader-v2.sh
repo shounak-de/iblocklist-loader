@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Generic iblocklist.com ipset loader for ipset v4 and v6
+# Generic iblocklist.com ipset loader for ipset v4 and v6 (Extended version with several more lists and options to tweak)
 # Author: redhat27
 # snbforums thread: https://www.snbforums.com/threads/iblocklist-com-generic-ipset-loader-for-ipset-v6-and-v4.37976/
 # credits for v6 implementation: http://www.unix.com/shell-programming-and-scripting/233825-convert-ip-ranges-cidr-netblocks.html
