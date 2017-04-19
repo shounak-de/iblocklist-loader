@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Generic iblocklist.com ipset loader for ipset v4 and v6 (Extended version with several more lists and options to tweak)
+# Generic iblocklist.com ipset loader for ipset v4 and v6 (Extended version with more lists and options)
 # Author: redhat27
 # snbforums thread: https://www.snbforums.com/threads/iblocklist-com-generic-ipset-loader-for-ipset-v6-and-v4.37976/
 # credits for v6 implementation: http://www.unix.com/shell-programming-and-scripting/233825-convert-ip-ranges-cidr-netblocks.html
@@ -77,7 +77,7 @@ List065="Charter          I-Blocklist  http://list.iblocklist.com/?list=htnzojgo
 List066="Embarq           I-Blocklist  http://list.iblocklist.com/?list=twdblifaysaqtypevvdp  src,dst"
 List067="Suddenlink       I-Blocklist  http://list.iblocklist.com/?list=psaoblrwylfrdsspfuiq  src,dst"
 List068="Sprint           I-Blocklist  http://list.iblocklist.com/?list=hngtqrhhuadlceqxbrob  src,dst"
-# -------List (Country)---Maintainer--Download URL--------------------------------------------Traffic
+# -------List (Country)---Maintainer---Download URL-------------------------------------------Traffic
 List069="Afghanistan      I-Blocklist  http://list.iblocklist.com/?list=af                    src,dst"
 List070="Aland-Islands    I-Blocklist  http://list.iblocklist.com/?list=ax                    src,dst"
 List071="Albania          I-Blocklist  http://list.iblocklist.com/?list=al                    src,dst"
@@ -498,7 +498,7 @@ for domainsFile in BLACK WHITE; do
     while read line; do
       if [ -n "${line%%#*}" ]; then
         for ip in $(nslookup ${line%%#*} | sed -n '/^$/,$ s/^A.*: //p' | cut -d' ' -f1 | grep -v ":"); do
-          ipset $ADD $IPSET_LIST $ip &>/dev/null
+          ipset -q $ADD $IPSET_LIST $ip
           [ $? -eq 0 ] && entryCount=$((entryCount+1))
         done
       fi
