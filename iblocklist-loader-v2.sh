@@ -360,7 +360,7 @@ GetListDetails () {
   Url=$(eval echo \$$(eval echo List${i}) | awk '{ print $3 }')
   Traffic=$(eval echo \$$(eval echo List${i}) | awk '{ print $4 }')
   [ ! -s "$IPSET_LISTS_DIR/${SetName}.gz" -o -n "$(find $IPSET_LISTS_DIR/${SetName}.gz -mtime +$LISTS_SAVE_DAYS -print 2>/dev/null)" ] && wget -q -O $IPSET_LISTS_DIR/${SetName}.gz ${Url}
-  [ "$USE_LOCAL_CACHE" = "Y" ] && GetCommand="cat $IPSET_LISTS_DIR/${SetName}.gz" || GetCommand="wget -q -O - ${Url}"
+  [ "$USE_LOCAL_CACHE" = "Y" ] && GetCommand="cat $IPSET_LISTS_DIR/${SetName}.gz" || GetCommand="wget -q -O - \"${Url}\""
 }
 
 # If the script is run from console, then print to console what it is doing at the moment (and also log to syslog)
