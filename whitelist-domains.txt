@@ -5,3 +5,7 @@
 mail.live.com # Hotmail blocked by TBG Primary-Threats
 icloud.com # blocked by TBG Primary-Threats
 apple.com # blocked by TBG Primary-Threats
+speedtest.net #29
+bbc.co.uk #33
+teamviewer.com #2
+eotugame.com #premium malicious by squidblacklist
