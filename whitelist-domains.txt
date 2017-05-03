@@ -2,10 +2,10 @@
 # The IPv4 addresses for the domains in this file would be added to an ipset list called [WhitelistDomains] and then
 # an iptables ACCEPT rule will be created that would preceed any DROP/REJECT rule created by iblocklist-loader
 
-mail.live.com # Hotmail blocked by TBG Primary-Threats
-icloud.com # blocked by TBG Primary-Threats
 apple.com # blocked by TBG Primary-Threats
-speedtest.net #29
-bbc.co.uk #33
-teamviewer.com #2
-eotugame.com #premium malicious by squidblacklist
+bbc.co.uk # blocked by TBG Primary-Threats
+eotugame.com #blocked by Squidblacklist Malicious (premium)
+icloud.com # blocked by TBG Primary-Threats
+mail.live.com # Hotmail blocked by TBG Primary-Threats
+speedtest.net # blocked by Yoyo Adservers
+teamviewer.com # blocked by Bluetack Level1
