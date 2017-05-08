@@ -80,3 +80,8 @@ scanner02.project25499.com # US
 scanner03.project25499.com # US
 scanner04.project25499.com # US
 scanner05.project25499.com # US
+
+# Ragentek Android OTA MITM Vulnerability from https://www.kb.cert.org/vuls/id/624539
+oyag.lhzbdvm.com
+oyag.prugskh.net
+oyag.prugskh.com
