@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # Generic iblocklist.com ipset loader for ipset v4 and v6 (Original version)
-# Author: redhat27
+# Author: redhat27, Version 1.1
 # snbforums thread: https://www.snbforums.com/threads/iblocklist-com-generic-ipset-loader-for-ipset-v6-and-v4.37976/
 # credits for v6 implementation: http://www.unix.com/shell-programming-and-scripting/233825-convert-ip-ranges-cidr-netblocks.html
 
@@ -143,15 +143,15 @@ case $(ipset -v | grep -o "v[4,6]") in
         ipset swap tIP ${SetName}Single
         ipset swap tNet ${SetName}CIDR
         ipset destroy tIP; ipset destroy tNet
-        logger -t Firewall "$0: Loaded ${SetName}Single blocklist with $(ipset -L ${SetName}Single | wc -l | awk '{print $1-6}') entries"
-        logger -t Firewall "$0: Loaded ${SetName}CIDR blocklist with $(ipset -L ${SetName}CIDR | wc -l | awk '{print $1-6}') entries"
+        logger -t Firewall "$0: Loaded ${SetName}Single blocklist with $(ipset -L ${SetName}Single | wc -l | awk '{print $1-7}') entries"
+        logger -t Firewall "$0: Loaded ${SetName}CIDR blocklist with $(ipset -L ${SetName}CIDR | wc -l | awk '{print $1-7}') entries"
       else
         logger -t Firewall "$0: Skipped loading ${SetName} blocklists as they are already loaded. To force reloading, set USE_LOCAL_CACHE=N"
-        iptables -D FORWARD -m set --match-set ${SetName}Single src -j $IPTABLES_RULE_TARGET
-        iptables -D FORWARD -m set --match-set ${SetName}CIDR src -j $IPTABLES_RULE_TARGET
+        iptables -D PREROUTING -t raw -m set --match-set ${SetName}Single src -j $IPTABLES_RULE_TARGET
+        iptables -D PREROUTING -t raw -m set --match-set ${SetName}CIDR src -j $IPTABLES_RULE_TARGET
       fi
-      iptables -I FORWARD -m set --match-set ${SetName}Single src -j $IPTABLES_RULE_TARGET
-      iptables -I FORWARD -m set --match-set ${SetName}CIDR src -j $IPTABLES_RULE_TARGET
+      iptables -I PREROUTING -t raw -m set --match-set ${SetName}Single src -j $IPTABLES_RULE_TARGET
+      iptables -I PREROUTING -t raw -m set --match-set ${SetName}CIDR src -j $IPTABLES_RULE_TARGET
     done;;
   v4)
     # Loading ipset modules
@@ -176,16 +176,16 @@ case $(ipset -v | grep -o "v[4,6]") in
         logger -t Firewall "$0: Loaded ${SetName} blocklist with $(ipset -L ${SetName} | wc -l | awk '{print $1-6}') entries"
       else
         logger -t Firewall "$0: Skipped loading ${SetName} blocklist as it's already loaded. To force reloading, set USE_LOCAL_CACHE=N"
-        iptables -D FORWARD -m set --set ${SetName} src -j $IPTABLES_RULE_TARGET
+        iptables -D PREROUTING -t raw -m set --set ${SetName} src -j $IPTABLES_RULE_TARGET
       fi
-      iptables -I FORWARD -m set --set ${SetName} src -j $IPTABLES_RULE_TARGET
+      iptables -I PREROUTING -t raw -m set --set ${SetName} src -j $IPTABLES_RULE_TARGET
     done;;
   *)
     logger -t Firewall "$0: Unknown ipset version. Exiting."
     exit 1;;
 esac
 if [ -s "$WHITELIST_DOMAINS_FILE" ]; then
-  iptables-save | grep -q WhiteList && iptables -D FORWARD -m set $MATCH_SET WhiteList src,dst -j ACCEPT
+  iptables-save | grep -q WhiteList && iptables -D PREROUTING -t raw -m set $MATCH_SET WhiteList src,dst -j ACCEPT
   ipset $DESTROY WhiteList &>/dev/null # Destroy *if* existing (It will exist if this script is run more than once, e.g. scheduled in cron)
   ipset $CREATE WhiteList $IPHASH
   [ $? -eq 0 ] && entryCount=0
@@ -198,5 +198,5 @@ if [ -s "$WHITELIST_DOMAINS_FILE" ]; then
     fi
   done < $WHITELIST_DOMAINS_FILE
   logger -t Firewall "$0: Added WhiteList ($entryCount entries)"
-  iptables-save | grep -q WhiteList || iptables -I FORWARD -m set $MATCH_SET WhiteList src,dst -j ACCEPT
+  iptables-save | grep -q WhiteList || iptables -I PREROUTING -t raw -m set $MATCH_SET WhiteList src,dst -j ACCEPT
 fi
