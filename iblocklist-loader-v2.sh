@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # Generic iblocklist.com ipset loader for ipset v4 and v6 (Extended version with more lists and options)
-# Author: redhat27
+# Author: redhat27, Version 1.1
 # snbforums thread: https://www.snbforums.com/threads/iblocklist-com-generic-ipset-loader-for-ipset-v6-and-v4.37976/
 # credits for v6 implementation: http://www.unix.com/shell-programming-and-scripting/233825-convert-ip-ranges-cidr-netblocks.html
 
@@ -326,12 +326,12 @@ BLACKLIST_DOMAINS_TRAFFIC="src,dst" # [src|dst|src,dst] Use [src] to block inbou
 
 ################################## [[[ IMPORTANT ]]] ###################################
 # Processing order of block list, allow list, whitelist domains and blacklist domains: #
-# Network traffic be filtered in this order in iptables FORWARD chain:                 #
+# Network traffic be filtered in this order in iptables PREROUTING chain in raw table: #
 # [1] Traffic to/from whitelisted domains in the WHITELIST_DOMAINS_FILE (if specified) # <= Traffic will be allowed through the firewall
 # [2] Traffic to/from blacklisted domains in the BLACKLIST_DOMAINS_FILE (if specified) # <= Traffic will be blocked on the firewall
 # [3] Traffic to/from lists referenced in the ALLOWLIST_INDEXES (if specified)         # <= Traffic will be allowed through the firewall
 # [4] Traffic to/from lists referenced in the BLOCKLIST_INDEXES (if specified)         # <= Traffic will be blocked on the firewall
-# [5] Your existing iptables FORWARD rules.                                            #
+# [5] Your existing iptables PREROUTING rules (raw table).                             #
 ########################################################################################
 
 # Use locally cached ipset data or download on each run
@@ -441,15 +441,15 @@ case $(ipset -v | grep -o "v[4,6]") in
         ipset swap tIP ${SetName}Single
         ipset swap tNet ${SetName}CIDR
         ipset destroy tIP; ipset destroy tNet
-        Log "Loaded ${SetName}Single $(echo $processType | tr '[A-Z]' '[a-z]')list with $(ipset -L ${SetName}Single | wc -l | awk '{print $1-6}') entries"
-        Log "Loaded ${SetName}CIDR $(echo $processType | tr '[A-Z]' '[a-z]')list with $(ipset -L ${SetName}CIDR | wc -l | awk '{print $1-6}') entries"
+        Log "Loaded ${SetName}Single $(echo $processType | tr '[A-Z]' '[a-z]')list with $(ipset -L ${SetName}Single | wc -l | awk '{print $1-7}') entries"
+        Log "Loaded ${SetName}CIDR $(echo $processType | tr '[A-Z]' '[a-z]')list with $(ipset -L ${SetName}CIDR | wc -l | awk '{print $1-7}') entries"
       else
-        iptables -D FORWARD -m set --match-set ${SetName}Single $Traffic -j $PROCESS_RULES_TARGET
-        iptables -D FORWARD -m set --match-set ${SetName}CIDR $Traffic -j $PROCESS_RULES_TARGET
+        iptables -D PREROUTING -t raw -m set --match-set ${SetName}Single $Traffic -j $PROCESS_RULES_TARGET
+        iptables -D PREROUTING -t raw -m set --match-set ${SetName}CIDR $Traffic -j $PROCESS_RULES_TARGET
         Log "Skipped loading ${SetName} $(echo $processType | tr '[A-Z]' '[a-z]')lists as they are already loaded. To force reloading, set USE_LOCAL_CACHE=N"
       fi
-      iptables -I FORWARD -m set --match-set ${SetName}Single $Traffic -j $PROCESS_RULES_TARGET
-      iptables -I FORWARD -m set --match-set ${SetName}CIDR $Traffic -j $PROCESS_RULES_TARGET
+      iptables -I PREROUTING -t raw -m set --match-set ${SetName}Single $Traffic -j $PROCESS_RULES_TARGET
+      iptables -I PREROUTING -t raw -m set --match-set ${SetName}CIDR $Traffic -j $PROCESS_RULES_TARGET
     done
   done;;
   v4)
@@ -477,10 +477,10 @@ case $(ipset -v | grep -o "v[4,6]") in
         ipset --destroy iBTmp
         Log "Loaded ${SetName} $(echo $processType | tr '[A-Z]' '[a-z]')list with $(ipset -L ${SetName} | wc -l | awk '{print $1-6}') entries"
       else
-        iptables -D FORWARD -m set --set ${SetName} $Traffic -j $PROCESS_RULES_TARGET
+        iptables -D PREROUTING -t raw -m set --set ${SetName} $Traffic -j $PROCESS_RULES_TARGET
         Log "Skipped loading ${SetName} $(echo $processType | tr '[A-Z]' '[a-z]')list as it's already loaded. To force reloading, set USE_LOCAL_CACHE=N"
       fi
-      iptables -I FORWARD -m set --set ${SetName} $Traffic -j $PROCESS_RULES_TARGET
+      iptables -I PREROUTING -t raw -m set --set ${SetName} $Traffic -j $PROCESS_RULES_TARGET
     done
   done;;
   *)
@@ -491,7 +491,7 @@ for domainsFile in BLACK WHITE; do
   if [ -s "$(eval echo \$$(eval echo ${domainsFile}LIST_DOMAINS_FILE))" ]; then
     [ "$domainsFile" = "BLACK" ] && PROCESS_RULES_TARGET=$IPTABLES_BLOCK_TARGET || PROCESS_RULES_TARGET=ACCEPT
     IPSET_LIST="${domainsFile:0:1}$(echo ${domainsFile:1} | tr '[A-Z]' '[a-z]')listDomains"
-    iptables-save | grep -q $IPSET_LIST && iptables -D FORWARD -m set $MATCH_SET $IPSET_LIST $(eval echo \$$(eval echo ${domainsFile}LIST_DOMAINS_TRAFFIC)) -j $PROCESS_RULES_TARGET
+    iptables-save | grep -q $IPSET_LIST && iptables -D PREROUTING -t raw -m set $MATCH_SET $IPSET_LIST $(eval echo \$$(eval echo ${domainsFile}LIST_DOMAINS_TRAFFIC)) -j $PROCESS_RULES_TARGET
     ipset $DESTROY $IPSET_LIST &>/dev/null # Destroy *if* existing (It will exist if this script is run more than once, e.g. scheduled in cron)
     ipset $CREATE $IPSET_LIST $IPHASH
     [ $? -eq 0 ] && entryCount=0
@@ -504,6 +504,6 @@ for domainsFile in BLACK WHITE; do
       fi
     done <$(eval echo \$$(eval echo ${domainsFile}LIST_DOMAINS_FILE))
     Log "Added $IPSET_LIST ($entryCount entries)"
-    iptables-save | grep -q $IPSET_LIST || iptables -I FORWARD -m set $MATCH_SET $IPSET_LIST $(eval echo \$$(eval echo ${domainsFile}LIST_DOMAINS_TRAFFIC)) -j $PROCESS_RULES_TARGET
+    iptables-save | grep -q $IPSET_LIST || iptables -I PREROUTING -t raw -m set $MATCH_SET $IPSET_LIST $(eval echo \$$(eval echo ${domainsFile}LIST_DOMAINS_TRAFFIC)) -j $PROCESS_RULES_TARGET
   fi
 done
