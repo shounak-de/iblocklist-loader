@@ -18,7 +18,6 @@ sls.update.microsoft.com.akadns.net # United States, WA, Redmond
 diagnostics.support.microsoft.com # United States, WA, Redmond
 choice.microsoft.com # United States, WA, Redmond
 choice.microsoft.com.nsatc.net # United States, WA, Redmond
-a-0001.a-msedge.net # United States, WA, Redmond
 pre.footprintpredict.com # United States, WA, Redmond
 watson.live.com # United States, WA, Redmond
 survey.watson.microsoft.com # United States, WA, Redmond
