@@ -185,18 +185,18 @@ case $(ipset -v | grep -o "v[4,6]") in
     exit 1;;
 esac
 if [ -s "$WHITELIST_DOMAINS_FILE" ]; then
-  iptables-save | grep -q WhiteList && iptables -D PREROUTING -t raw -m set $MATCH_SET WhiteList src,dst -j ACCEPT
-  ipset $DESTROY WhiteList &>/dev/null # Destroy *if* existing (It will exist if this script is run more than once, e.g. scheduled in cron)
-  ipset $CREATE WhiteList $IPHASH
+  iptables-save | grep -q WhitelistDomains && iptables -D PREROUTING -t raw -m set $MATCH_SET WhitelistDomains src,dst -j ACCEPT
+  ipset $DESTROY WhitelistDomains &>/dev/null # Destroy *if* existing (It will exist if this script is run more than once, e.g. scheduled in cron)
+  ipset $CREATE WhitelistDomains $IPHASH
   [ $? -eq 0 ] && entryCount=0
   while read line; do
     if [ -n "${line%%#*}" ]; then
       for ip in $(nslookup ${line%%#*} | sed -n '/^$/,$ s/^A.*: //p' | cut -d' ' -f1 | grep -v ":"); do
-        ipset $ADD WhiteList $ip
+        ipset $ADD WhitelistDomains $ip
         [ $? -eq 0 ] && entryCount=$((entryCount+1))
       done
     fi
   done < $WHITELIST_DOMAINS_FILE
-  logger -t Firewall "$0: Added WhiteList ($entryCount entries)"
-  iptables-save | grep -q WhiteList || iptables -I PREROUTING -t raw -m set $MATCH_SET WhiteList src,dst -j ACCEPT
+  logger -t Firewall "$0: Added WhitelistDomains ($entryCount entries)"
+  iptables-save | grep -q WhitelistDomains || iptables -I PREROUTING -t raw -m set $MATCH_SET WhitelistDomains src,dst -j ACCEPT
 fi
