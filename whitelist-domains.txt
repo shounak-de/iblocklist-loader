@@ -9,3 +9,4 @@ icloud.com # blocked by TBG Primary-Threats
 mail.live.com # Hotmail blocked by TBG Primary-Threats
 speedtest.net # blocked by Yoyo Adservers
 teamviewer.com # blocked by Bluetack Level1
+pgl.yoyo.org # blocked by FireHOL lists used by ya-malware-block
