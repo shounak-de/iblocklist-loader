@@ -21,7 +21,6 @@ choice.microsoft.com.nsatc.net # United States, WA, Redmond
 pre.footprintpredict.com # United States, WA, Redmond
 watson.live.com # United States, WA, Redmond
 survey.watson.microsoft.com # United States, WA, Redmond
-compatexchange.cloudapp.net # United States, WA, Redmond
 vortex.data.microsoft.com # United States, WA, Redmond
 vortex-win.data.microsoft.com # United States, WA, Redmond
 vortex-sandbox.data.microsoft.com # United States, WA, Redmond
