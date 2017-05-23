@@ -29,7 +29,6 @@ df.telemetry.microsoft.com # United States, WA, Redmond
 telemetry.microsoft.com # United States, WA, Redmond
 reports.wes.df.telemetry.microsoft.com # United States, WA, Redmond
 services.wes.df.telemetry.microsoft.com # United States, WA, Redmond
-public-family.api.account.microsoft.com # United States, WY, Cheyenne
 urs.microsoft.com # United States, TX, San Antonio
 wes.df.telemetry.microsoft.com # United States, WA, Redmond
 sqm.df.telemetry.microsoft.com # United States, WA, Redmond
