@@ -497,14 +497,10 @@ case $(ipset -v | grep -o "v[4,6]") in
   Log "Unknown ipset version. Exiting."
   exit 1;;
 esac
+[ ! -s $WHITELIST_CIDRS_FILE ] && curl -sk "https://raw.githubusercontent.com/shounak-de/iblocklist-loader/master/whitelist-cidrs.txt" -o $WHITELIST_CIDRS_FILE
 for CIDRs in BLACK WHITE; do
-  if [ "$CIDRs" = "WHITE" ]; then
-    [ ! -s $WHITELIST_CIDRS_FILE ] && curl -sk "https://raw.githubusercontent.com/shounak-de/iblocklist-loader/master/whitelist-cidrs.txt" -o $WHITELIST_CIDRS_FILE
-    PROCESS_RULES_TARGET=ACCEPT
-  else
-    PROCESS_RULES_TARGET=$IPTABLES_BLOCK_TARGET
-  fi
   if [ -s "$(eval echo \$$(eval echo ${CIDRs}LIST_CIDRS_FILE))" ]; then
+    [ "$CIDRs" = "BLACK" ] && PROCESS_RULES_TARGET=$IPTABLES_BLOCK_TARGET || PROCESS_RULES_TARGET=ACCEPT
     IPSET_LIST="${CIDRs:0:1}$(echo ${CIDRs:1} | tr '[A-Z]' '[a-z]')listCIDRs"
     iptables-save | grep -q $IPSET_LIST && iptables -D PREROUTING -t raw -m set $MATCH_SET $IPSET_LIST $(eval echo \$$(eval echo ${CIDRs}LIST_CIDRS_TRAFFIC)) -j $PROCESS_RULES_TARGET
     ipset $DESTROY $IPSET_LIST &>/dev/null # Destroy *if* existing (It will exist if this script is run more than once, e.g. scheduled in cron)
