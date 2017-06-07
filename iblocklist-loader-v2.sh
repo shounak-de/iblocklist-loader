@@ -307,7 +307,7 @@ List294="Zambia           I-Blocklist  http://list.iblocklist.com/?list=zm      
 List295="Zimbabwe         I-Blocklist  http://list.iblocklist.com/?list=zw                    src,dst"
 
 # Block traffic from any of the above lists
-BLOCKLIST_INDEXES="13" # Can be any combination of above list indexes, e.g "38 13", "1", "7 24 8 29 31" etc. [Example: PeerGuardian implementation would be "2 11"]
+BLOCKLIST_INDEXES="13 15 17 10" # Can be any combination of above list indexes, e.g "38 13", "1", "7 24 8 29 31" etc. [Example: PeerGuardian implementation would be "2 11"]
 
 # Allow traffic from any of the above lists [!]
 ALLOWLIST_INDEXES="" # Can be any combination of above list indexes, just like BLOCKLIST_INDEXES
