@@ -1,0 +1,6 @@
+# Private IP ranges unroutable over internet
+# See https://en.wikipedia.org/wiki/Private_network
+
+10.0.0.0/8     # class A network
+172.16.0.0/12  # class B network
+192.168.0.0/16 # class C network
