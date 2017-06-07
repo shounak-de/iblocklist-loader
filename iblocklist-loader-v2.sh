@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # Generic iblocklist.com ipset loader for ipset v4 and v6 (Extended version with more lists and options)
-# Author: redhat27, Version 1.1
+# Author: redhat27, Version 1.2
 # snbforums thread: https://www.snbforums.com/threads/iblocklist-com-generic-ipset-loader-for-ipset-v6-and-v4.37976/
 # credits for v6 implementation: http://www.unix.com/shell-programming-and-scripting/233825-convert-ip-ranges-cidr-netblocks.html
 
@@ -307,7 +307,7 @@ List294="Zambia           I-Blocklist  http://list.iblocklist.com/?list=zm      
 List295="Zimbabwe         I-Blocklist  http://list.iblocklist.com/?list=zw                    src,dst"
 
 # Block traffic from any of the above lists
-BLOCKLIST_INDEXES="13 15 17 10" # Can be any combination of above list indexes, e.g "38 13", "1", "7 24 8 29 31" etc. [Example: PeerGuardian implementation would be "2 11"]
+BLOCKLIST_INDEXES="13" # Can be any combination of above list indexes, e.g "38 13", "1", "7 24 8 29 31" etc. [Example: PeerGuardian implementation would be "2 11"]
 
 # Allow traffic from any of the above lists [!]
 ALLOWLIST_INDEXES="" # Can be any combination of above list indexes, just like BLOCKLIST_INDEXES
@@ -322,17 +322,27 @@ WHITELIST_DOMAINS_TRAFFIC="src,dst" # [src|dst|src,dst] Use [src] to allow inbou
 BLACKLIST_DOMAINS_FILE="/jffs/ipset_lists/blacklist-domains.txt" # One line per domain, comments (starting with the '#' character) allowed, even inline comments
 BLACKLIST_DOMAINS_TRAFFIC="src,dst" # [src|dst|src,dst] Use [src] to block inbound traffic, [dst] to block outbound traffic and [src,dst] to block both traffic
 
+# You should always have a WHITELIST_CIDR_FILE defined and present to stop the downloaded ipset data attempting to block your internal LAN IPs. You may *append* to this list to  this list (if you want, but totally optional) to whitelist other CIDR ranges.
+WHITELIST_CIDRS_FILE="/jffs/ipset_lists/whitelist-cidrs.txt" # One line per CIDR entry, comments (starting with the '#' character) allowed, even inline comments
+WHITELIST_CIDRS_TRAFFIC="src,dst" # [src|dst|src,dst] Use [src] to allow inbound traffic, [dst] to allow outbound traffic and [src,dst] to allow both traffic
+
+# You can also manually add some CIDR ranges to be blacklisted in a local file (optional)
+BLACKLIST_CIDRS_FILE="/jffs/ipset_lists/blacklist-cidrs.txt" # One line per domain, comments (starting with the '#' character) allowed, even inline comments
+BLACKLIST_CIDRS_TRAFFIC="src,dst" # [src|dst|src,dst] Use [src] to block inbound traffic, [dst] to block outbound traffic and [src,dst] to block both traffic
+
 # Note: You can also control the inboud/outbound/both traffic for each of the lists: Just modify the [Traffic] column (the last one) in each list
 
-################################## [[[ IMPORTANT ]]] ###################################
-# Processing order of block list, allow list, whitelist domains and blacklist domains: #
-# Network traffic be filtered in this order in iptables PREROUTING chain in raw table: #
-# [1] Traffic to/from whitelisted domains in the WHITELIST_DOMAINS_FILE (if specified) # <= Traffic will be allowed through the firewall
-# [2] Traffic to/from blacklisted domains in the BLACKLIST_DOMAINS_FILE (if specified) # <= Traffic will be blocked on the firewall
-# [3] Traffic to/from lists referenced in the ALLOWLIST_INDEXES (if specified)         # <= Traffic will be allowed through the firewall
-# [4] Traffic to/from lists referenced in the BLOCKLIST_INDEXES (if specified)         # <= Traffic will be blocked on the firewall
-# [5] Your existing iptables PREROUTING rules (raw table).                             #
-########################################################################################
+################################## [[[ IMPORTANT ]]] ####################################
+# Processing order of block list, allow list, whitelist domains and blacklist domains:  #
+# Network traffic be filtered in this order in iptables PREROUTING chain in raw table:  #
+# [1] Traffic to/from whitelisted domains in the WHITELIST_DOMAINS_FILE (if specified)  # <= Traffic will be allowed through the firewall
+# [2] Traffic to/from blacklisted domains in the BLACKLIST_DOMAINS_FILE (if specified)  # <= Traffic will be blocked on the firewall
+# [3] Traffic to/from whitelisted domains in the WHITELIST_CIDR_FILE (private IP ranges)# <= Traffic will be allowed through the firewall
+# [4] Traffic to/from blacklisted domains in the BLACKLIST_CIDR_FILE (if specified)     # <= Traffic will be blocked on the firewall
+# [5] Traffic to/from lists referenced in the ALLOWLIST_INDEXES (if specified)          # <= Traffic will be allowed through the firewall
+# [6] Traffic to/from lists referenced in the BLOCKLIST_INDEXES (if specified)          # <= Traffic will be blocked on the firewall
+# [7] Your existing iptables PREROUTING rules (raw table).                              #
+#########################################################################################
 
 # Use locally cached ipset data or download on each run
 USE_LOCAL_CACHE=Y # [Y|N]
@@ -390,7 +400,7 @@ case $(ipset -v | grep -o "v[4,6]") in
   for module in ip_set ip_set_hash_net ip_set_hash_ip xt_set; do
     modprobe $module
   done;
-  MATCH_SET='--match-set'; CREATE='create'; DESTROY='destroy'; ADD='add'; IPHASH='hash:ip'
+  MATCH_SET='--match-set'; CREATE='create'; DESTROY='destroy'; ADD='add'; IPHASH='hash:ip'; NETHASH='hash:net'
   ipset destroy tIP 2>/dev/null; ipset destroy tNet 2>/dev/null # Recover if previous run aborted
   for processType in BLOCK ALLOW; do
     [ "$processType" = "BLOCK" ] && PROCESS_RULES_TARGET=$IPTABLES_BLOCK_TARGET || PROCESS_RULES_TARGET=ACCEPT
@@ -458,7 +468,7 @@ case $(ipset -v | grep -o "v[4,6]") in
   for module in ip_set ip_set_iptreemap ipt_set; do
     modprobe $module
   done;
-  MATCH_SET='--set'; CREATE='--create'; DESTROY='--destroy'; ADD='--add'; IPHASH='iphash'
+  MATCH_SET='--set'; CREATE='--create'; DESTROY='--destroy'; ADD='--add'; IPHASH='iphash'; NETHASH='nethash'
   ipset --destroy iBTmp 2>/dev/null # Recover if previous run aborted
   for processType in BLOCK ALLOW; do
     [ "$processType" = "BLOCK" ] && PROCESS_RULES_TARGET=$IPTABLES_BLOCK_TARGET || PROCESS_RULES_TARGET=ACCEPT
@@ -487,6 +497,31 @@ case $(ipset -v | grep -o "v[4,6]") in
   Log "Unknown ipset version. Exiting."
   exit 1;;
 esac
+for CIDRs in BLACK WHITE; do
+  if [ "$CIDRs" = "WHITE" ]; then
+    [ ! -s $WHITELIST_CIDRS_FILE ] && curl -sk "https://raw.githubusercontent.com/shounak-de/iblocklist-loader/master/whitelist-cidrs.txt" -o $WHITELIST_CIDRS_FILE
+    PROCESS_RULES_TARGET=ACCEPT
+  else
+    PROCESS_RULES_TARGET=$IPTABLES_BLOCK_TARGET
+  fi
+  if [ -s "$(eval echo \$$(eval echo ${CIDRs}LIST_CIDRS_FILE))" ]; then
+    IPSET_LIST="${CIDRs:0:1}$(echo ${CIDRs:1} | tr '[A-Z]' '[a-z]')listCIDRs"
+    iptables-save | grep -q $IPSET_LIST && iptables -D PREROUTING -t raw -m set $MATCH_SET $IPSET_LIST $(eval echo \$$(eval echo ${CIDRs}LIST_CIDRS_TRAFFIC)) -j $PROCESS_RULES_TARGET
+    ipset $DESTROY $IPSET_LIST &>/dev/null # Destroy *if* existing (It will exist if this script is run more than once, e.g. scheduled in cron)
+    ipset $CREATE $IPSET_LIST $NETHASH
+    [ $? -eq 0 ] && entryCount=0
+    while read line; do
+      if [ -n "${line%%#*}" ]; then
+        for cidr in ${line%%#*}; do
+          ipset -q $ADD $IPSET_LIST $cidr
+          [ $? -eq 0 ] && entryCount=$((entryCount+1))
+        done
+      fi
+    done <$(eval echo \$$(eval echo ${CIDRs}LIST_CIDRS_FILE))
+    Log "Added $IPSET_LIST ($entryCount entries)"
+    iptables-save | grep -q $IPSET_LIST || iptables -I PREROUTING -t raw -m set $MATCH_SET $IPSET_LIST $(eval echo \$$(eval echo ${CIDRs}LIST_CIDRS_TRAFFIC)) -j $PROCESS_RULES_TARGET
+  fi
+done
 for domainsFile in BLACK WHITE; do
   if [ -s "$(eval echo \$$(eval echo ${domainsFile}LIST_DOMAINS_FILE))" ]; then
     [ "$domainsFile" = "BLACK" ] && PROCESS_RULES_TARGET=$IPTABLES_BLOCK_TARGET || PROCESS_RULES_TARGET=ACCEPT
